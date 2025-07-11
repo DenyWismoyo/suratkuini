@@ -1,45 +1,53 @@
-import { User, Calendar, FileEdit, History } from 'lucide-react';
+import { useEffect } from 'react';
+import { useUI } from '../../context/UIContext';
 
-export default function SuratMasukCard({ item, index, onEdit, openModal }) {
-    const tglSurat = item.tanggalSurat?.toDate ? item.tanggalSurat.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+export default function SuratMasukCard({ item, index }) {
+    const { openModal } = useUI();
+
+    useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, [item]);
+
+    const statusClass = item.statusDisposisi === 'Sudah Disposisi' ? 'text-green-accent border-green-accent/50' : 'text-yellow-accent border-yellow-accent/50';
+    const tglSurat = item.tanggalSurat?.toDate ? item.tanggalSurat.toDate().toLocaleDateString('id-ID') : 'N/A';
     
-    const statusMap = {
-        'Belum Disposisi': 'border-yellow-400/50 text-yellow-400',
-        'Sudah Disposisi': 'border-green-400/50 text-green-400',
-    };
-    const statusClass = statusMap[item.statusDisposisi] || 'border-gray-400/50 text-gray-400';
+    const waktuPelaksanaan = item.waktuPelaksanaan?.toDate 
+        ? item.waktuPelaksanaan.toDate().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' }) 
+        : null;
 
     return (
-        <div 
-            className="bg-bg-surface border border-border-color rounded-lg p-4 flex flex-col gap-4 transition-all duration-300 hover:border-accent-color hover:shadow-lg hover:shadow-accent-color/10"
-            style={{ animationDelay: `${index * 50}ms`, animation: 'slide-up-fade-in 0.5s ease-out forwards', opacity: 0 }}
-        >
-            {/* Header Kartu */}
-            <div className="flex justify-between items-start gap-2">
-                <h3 className="text-base font-bold text-text-primary leading-tight flex-1">{item.perihal}</h3>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={() => openModal('detailSurat', item)} className="p-1.5 text-text-secondary hover:bg-bg-muted rounded-full transition" title="Lihat Riwayat">
-                        <History className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => onEdit(item)} className="p-1.5 text-text-secondary hover:bg-bg-muted rounded-full transition" title="Edit Surat">
-                        <FileEdit className="w-4 h-4" />
-                    </button>
+        <div className="elegant-card flex flex-col justify-between h-full" style={{ animationDelay: `${index * 50}ms` }}>
+            <div>
+                <div className="flex justify-between items-start gap-4">
+                    <h3 className="font-bold text-text-primary text-md flex-1">{item.perihal}</h3>
+                    <div className="flex items-center gap-2">
+                         <button className="p-1 text-text-secondary hover:text-text-primary transition" title="Lihat Riwayat">
+                            <i data-lucide="history" className="w-4 h-4 pointer-events-none"></i>
+                        </button>
+                        <button onClick={() => openModal('suratMasuk', item)} className="p-1 text-text-secondary hover:text-text-primary transition" title="Edit Surat">
+                            <i data-lucide="file-edit" className="w-4 h-4 pointer-events-none"></i>
+                        </button>
+                    </div>
                 </div>
+                <p className="text-sm text-text-secondary mt-2">Dari: <span className="font-medium text-text-primary">{item.pengirim}</span></p>
+                <p className="text-sm text-text-secondary">Tgl: <span className="font-medium text-text-primary">{tglSurat}</span></p>
+                
+                {item.jenisSurat === 'Undangan' && waktuPelaksanaan && (
+                    <div className="mt-3 pt-3 border-t border-border-color/50 text-sm">
+                        <p className="font-semibold text-blue-accent flex items-center">
+                            <i data-lucide="calendar-clock" className="w-4 h-4 mr-2"></i>Agenda
+                        </p>
+                        <p className="text-text-secondary pl-6">Waktu: {waktuPelaksanaan} WIB</p>
+                        <p className="text-text-secondary pl-6">Tempat: {item.tempatPelaksanaan || 'N/A'}</p>
+                    </div>
+                )}
             </div>
-
-            {/* Metadata */}
-            <div className="flex flex-wrap items-center text-xs text-text-secondary gap-x-4 gap-y-1">
-                <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {item.pengirim || 'N/A'}</span>
-                <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {tglSurat}</span>
-            </div>
-
-            {/* Footer Kartu */}
-            <div className="border-t border-border-color/50 pt-3 flex justify-between items-center">
-                <span className={`text-xs font-semibold rounded-full px-2.5 py-1 border ${statusClass}`}>{item.statusDisposisi}</span>
-                <a href={item.linkDokumen} target="_blank" rel="noopener noreferrer" className="text-accent-color hover:text-accent-hover font-semibold text-sm transition-colors">
-                    Lihat File
-                </a>
+            <div className="mt-4 pt-4 border-t border-border-color flex justify-between items-center">
+                <span className={`text-xs font-semibold rounded-full px-2 py-0.5 border ${statusClass}`}>{item.statusDisposisi}</span>
+                <a href={item.linkDokumen} target="_blank" rel="noopener noreferrer" className="text-accent-color hover:underline font-semibold text-sm transition">Lihat File</a>
             </div>
         </div>
     );
-};
+}

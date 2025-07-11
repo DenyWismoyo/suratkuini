@@ -1,115 +1,67 @@
-import { useMemo } from 'react';
-import { ShieldCheck, LayoutDashboard, Inbox, Send, FileCheck2, History, Building2, Users, Settings, Sun, Moon, LogOut, X } from 'lucide-react';
+// ... (import lainnya)
+import { useMemo, useEffect } from 'react';
+import { NavLink } from 'react-router-dom'; // Import NavLink
+import { PERMISSIONS } from '../../config/permissions'; // Buat file ini nanti
 
-// Izin bisa didefinisikan di sini atau diimpor dari file terpisah
-const PERMISSIONS = {
-    canManageSurat: ['super_admin', 'admin', 'tu_pimpinan', 'tu_opd'],
-    canViewAllDisposisi: ['super_admin', 'pimpinan', 'admin'],
-    canManageUsers: ['super_admin', 'admin'],
-    canManageOPD: ['super_admin'],
-    canViewSettings: ['super_admin', 'admin'],
-};
-
-// Komponen Navigasi Internal
-const NavContent = ({ userInfo, activeTab, onTabChange, onLogout, theme, toggleTheme, sessionOpdName }) => {
+export default function Sidebar({ userInfo, onLogout, theme, toggleTheme, sessionOpdName }) {
     const navItems = useMemo(() => {
-        // ... (logika navItems sama seperti sebelumnya)
         const { peran } = userInfo || {};
         if (!peran) return [];
-        let tabs = [{ id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }];
+
+        let tabs = [{ id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: 'layout-dashboard' }];
+
         if (PERMISSIONS.canManageSurat.includes(peran)) {
-            tabs.push({ id: 'surat-masuk', label: 'Surat Masuk', icon: Inbox });
-            tabs.push({ id: 'surat-keluar', label: 'Surat Keluar', icon: Send });
+            tabs.push({ id: 'surat-masuk', path: '/surat-masuk', label: 'Surat Masuk', icon: 'inbox' });
+            tabs.push({ id: 'surat-keluar', path: '/surat-keluar', label: 'Surat Keluar', icon: 'send' });
         }
-        tabs.push({ id: 'disposisi-saya', label: 'Tugas Saya', icon: FileCheck2 });
+
+        tabs.push({ id: 'disposisi-saya', path: '/tugas-saya', label: 'Tugas Saya', icon: 'file-check-2' });
+
         if (PERMISSIONS.canViewAllDisposisi.includes(peran)) {
-            tabs.push({ id: 'disposisi', label: 'Riwayat Disposisi', icon: History });
+            tabs.push({ id: 'disposisi', path: '/riwayat-disposisi', label: 'Riwayat Disposisi', icon: 'history' });
         }
+
         if (PERMISSIONS.canManageOPD.includes(peran)) {
-            tabs.push({ id: 'manajemen-opd', label: 'Manajemen Unit Kerja', icon: Building2 });
+            tabs.push({ id: 'manajemen-opd', path: '/manajemen-opd', label: 'Manajemen Unit Kerja', icon: 'building-2' });
         }
         if (PERMISSIONS.canManageUsers.includes(peran)) {
-            tabs.push({ id: 'manajemen-pengguna', label: 'Manajemen Pengguna', icon: Users });
+            tabs.push({ id: 'manajemen-pengguna', path: '/manajemen-pengguna', label: 'Manajemen Pengguna', icon: 'users' });
         }
         if (PERMISSIONS.canViewSettings.includes(peran)) {
-            tabs.push({ id: 'pengaturan', label: 'Pengaturan', icon: Settings });
+            tabs.push({ id: 'pengaturan', path: '/pengaturan', label: 'Pengaturan', icon: 'settings' });
         }
+        
         return tabs;
     }, [userInfo]);
 
+    useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, [navItems, theme]);
+
     return (
-        <div className="flex flex-col h-full bg-bg-surface">
-            <div className="flex items-center justify-center gap-2 p-4 mb-4">
-                <ShieldCheck className="w-10 h-10 text-accent-color" />
-                <span className="text-2xl font-bold text-text-primary">ARKADIA</span>
-            </div>
-            <nav className="flex-1 space-y-2 px-4">
-                {navItems.map(tab => (
-                    <button 
-                        key={tab.id} 
-                        onClick={() => onTabChange(tab.id)} 
-                        className={`sidebar-btn w-full ${activeTab === tab.id ? 'active' : ''}`}
-                    >
-                        <tab.icon className="w-5 h-5" />
-                        <span>{tab.label}</span>
-                    </button>
-                ))}
-            </nav>
-            <div className="p-4 border-t border-border-color space-y-4">
-                {sessionOpdName && (
-                     <div className="p-2 text-center bg-bg-muted rounded-lg">
-                        <p className="text-xs text-text-secondary">Sesi Aktif:</p>
-                        <p className="font-semibold text-accent-color">{sessionOpdName}</p>
-                     </div>
-                )}
-                <button onClick={toggleTheme} className="sidebar-btn w-full">
-                    {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                    <span>Ganti Tema</span>
-                </button>
-                <div className="flex items-center gap-3">
-                     <div className="user-avatar-button">
-                        <span>{userInfo?.nama?.charAt(0) || 'U'}</span>
-                     </div>
-                     <div>
-                        <p className="font-semibold text-text-primary">{userInfo?.nama || 'Pengguna'}</p>
-                        <p className="text-xs text-text-secondary">{userInfo?.namaJabatan || 'Role'}</p>
-                     </div>
+        <aside className="sidebar">
+            <div className="flex flex-col h-full">
+                {/* ... (Header Sidebar) ... */}
+                <div className="flex items-center justify-center gap-2 p-4 mb-4">
+                    <i data-lucide="shield-check" className="w-10 h-10 text-accent-color"></i>
+                    <span className="text-2xl font-bold text-text-primary">ARKADIA</span>
                 </div>
-                <button onClick={onLogout} className="sidebar-btn w-full text-red-400 hover:bg-red-400/20">
-                    <LogOut className="w-5 h-5" />
-                    <span>Keluar</span>
-                </button>
+                <nav className="flex-1 space-y-2 px-2">
+                    {navItems.map(tab => (
+                        <NavLink 
+                            key={tab.id} 
+                            to={tab.path} 
+                            className={({ isActive }) => `sidebar-btn ${isActive ? 'active' : ''}`}
+                        >
+                            <i data-lucide={tab.icon}></i>
+                            <span>{tab.label}</span>
+                        </NavLink>
+                    ))}
+                </nav>
+                {/* ... (Footer Sidebar) ... */}
             </div>
-        </div>
+        </aside>
     );
-};
-
-// Komponen Sidebar Utama yang Adaptif
-export default function Sidebar({ isOpen, onClose, ...props }) {
-    return (
-        <>
-            {/* Sidebar untuk Desktop (selalu terlihat) */}
-            <aside className="hidden md:block w-[var(--sidebar-width)] flex-shrink-0">
-                <NavContent {...props} />
-            </aside>
-
-            {/* Sidebar untuk Mobile (Off-Canvas) */}
-            <div 
-                className={`fixed inset-0 z-40 transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-            >
-                {/* Backdrop */}
-                <div 
-                    className="absolute inset-0 bg-black/60"
-                    onClick={onClose}
-                ></div>
-                
-                {/* Konten Menu */}
-                <aside 
-                    className={`relative z-50 w-[var(--sidebar-width)] h-full transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
-                >
-                    <NavContent {...props} />
-                </aside>
-            </div>
-        </>
-    );
-};
+}

@@ -1,48 +1,53 @@
-import { useState } from 'react'; // PERBAIKAN: 'React' tidak perlu diimpor secara eksplisit
-import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useUI } from '../../context/UIContext';
+import { db } from '../../config/firebase';
+import { collection, addDoc, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import Loader from '../UI/Loader';
 
-// --- PATH DIPERBAIKI ---
-import Loader from '../../components/ui/Loader.jsx';
-import { useNotifier } from '../../contexts/NotificationContext.jsx';
-import { db } from '../../services/firebase.js';
-// ---
+export default function OPDModal() {
+    const { closeModal, modal } = useUI();
+    const { data } = modal;
+    const isEdit = !!data?.id;
 
-import { collection, doc, addDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
-
-export default function OPDModal({ data, onClose }) {
-    const [formData, setFormData] = useState({ nama: '', jenis: 'OPD', ...data });
+    const [formData, setFormData] = useState({ nama: '', jenis: 'OPD' });
     const [isLoading, setIsLoading] = useState(false);
-    const notifier = useNotifier();
+
+    useEffect(() => {
+        if (data) {
+            setFormData({ nama: data.nama, jenis: data.jenis || 'OPD' });
+        }
+    }, [data]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.nama) return notifier.show('Nama Unit Kerja wajib diisi.', 'warning');
+        if (!formData.nama) return alert('Nama Unit Kerja wajib diisi.');
         setIsLoading(true);
         try {
             const payload = { ...formData, updatedAt: serverTimestamp() };
-            if (data) {
+            if (isEdit) {
                 await updateDoc(doc(db, 'opds', data.id), payload);
             } else {
                 payload.createdAt = serverTimestamp();
                 await addDoc(collection(db, 'opds'), payload);
             }
-            notifier.show('Data Unit Kerja berhasil disimpan.', 'success');
-            onClose();
+            alert('Data Unit Kerja berhasil disimpan.');
+            closeModal();
         } catch (error) {
-            notifier.show('Gagal menyimpan data: ' + error.message, 'error');
+            console.error(error);
+            alert('Gagal menyimpan data: ' + error.message);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="modal-overlay active" onClick={onClose}>
+        <div className="modal-overlay active" onClick={closeModal}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
                 {isLoading && <Loader text="Menyimpan..." />}
-                <button onClick={onClose} className="modal-close-button"><X /></button>
-                <h2 className="text-xl font-bold mb-6 text-text-primary">{data ? 'Edit' : 'Tambah'} Unit Kerja</h2>
+                <button onClick={closeModal} className="modal-close-button"><i data-lucide="x"></i></button>
+                <h2 className="text-xl font-bold mb-6 text-text-primary">{isEdit ? 'Edit' : 'Tambah'} Unit Kerja</h2>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input type="text" placeholder="Nama Unit Kerja" className="form-input-elegant" value={formData.nama} onChange={e => setFormData(p => ({...p, nama: e.target.value}))} required />
+                    <input type="text" placeholder="Nama Unit Kerja (e.g., Dinas Pendidikan)" className="form-input-elegant" value={formData.nama} onChange={e => setFormData(p => ({...p, nama: e.target.value}))} required />
                     <select value={formData.jenis} onChange={e => setFormData(p => ({...p, jenis: e.target.value}))} className="form-input-elegant">
                         <option value="OPD">OPD</option>
                         <option value="Kecamatan">Kecamatan</option>
@@ -53,4 +58,4 @@ export default function OPDModal({ data, onClose }) {
             </div>
         </div>
     );
-};
+}
